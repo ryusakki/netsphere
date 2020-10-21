@@ -25,7 +25,7 @@ namespace Netsphere.Controllers
             lock(Peers)
             {
                 var currentTime = DateTime.Now;                
-                Peers.RemoveWhere(p => (currentTime - p.Timestamp).TotalSeconds > 5);
+                Peers.RemoveWhere(p => (p.Timestamp- currentTime).TotalSeconds > 5);
             }
         }
 

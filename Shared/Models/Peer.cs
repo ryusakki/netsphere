@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel.DataAnnotations;
 
-public class Peer : IEqualityComparer<Peer>
+public class Peer
 {
     // EndPoint do peer usado para registrar-se no servidor.
     // Que na realidade é apenas uma string no formato ip:port
@@ -18,13 +18,13 @@ public class Peer : IEqualityComparer<Peer>
     [Required]
     public List<string> AvailableContent { get; set; }
 
-    public bool Equals([DisallowNull] Peer x, [DisallowNull] Peer y)
+    public override bool Equals([DisallowNull] object o)
     {
-        return x.IPEndPoint == y.IPEndPoint;
+        return (o as Peer).IPEndPoint == IPEndPoint;
     }
 
-    public int GetHashCode([DisallowNull] Peer obj)
+    public override int GetHashCode()
     {
-        return obj.IPEndPoint.GetHashCode();
+        return IPEndPoint.GetHashCode();
     }
 }
