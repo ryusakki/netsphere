@@ -12,7 +12,7 @@ namespace Netsphere.Controllers
     public class NetsphereController : ControllerBase
     {
         private static object Locker = new object();
-        private static HashSet<Peer> Peers = new HashSet<Peer>();
+        private static HashSet<PeerModel> Peers = new HashSet<PeerModel>();
         private static Timer Timer = new Timer(5000);
 
         static NetsphereController()

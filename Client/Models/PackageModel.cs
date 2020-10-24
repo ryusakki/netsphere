@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Netsphere.Client.Models
 {
-    public class File
+    public class PackageModel : FileModel
     {
-        public File(string name, byte[] data)
+        public PackageModel(string name, byte[] data)
         {
             Name = name;
 
@@ -20,8 +20,7 @@ namespace Netsphere.Client.Models
             Data = data;
         }
 
-        public string Name { get; set; }
-        public string Hash { get; set; }
+
         public byte[] Data { get; set; }
     }
 }

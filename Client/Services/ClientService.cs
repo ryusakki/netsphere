@@ -10,21 +10,15 @@ namespace Netsphere.Client.Services
 {
     class ClientService
     {
-        private TcpListener listener;
+        private TcpClient client;
         private bool isRegistered;
 
         private static Timer Timer = new Timer(2000);
-        private static readonly HttpClient Client = new HttpClient();
-        private static readonly string Server = "localhost:5000";
 
-        public ClientService()
+
+        public ClientService(TcpClient client)
         {
-            var ip = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).First();
-            var port = new Random().Next(5000, 9000);
-            listener = new TcpListener(ip, port);
-            listener.Start();
-
-            IPEndPoint = listener.LocalEndpoint.ToString();
+            this.client = client;
             isRegistered = true;
 
             //Só ocorrem quando o registro é feito
@@ -46,23 +40,15 @@ namespace Netsphere.Client.Services
             }
         }
 
-        private void Register()
+        public void Register()
         {
-            Client.PostAsync(string.Concat(Server, "/Ping"), null).Wait();
+            var peer = new Peer();
+
+            Client.PostAsync(string.Concat(Server, "/Register"), null).Wait();
             isRegistered = true;
         }
 
         public string IPEndPoint { get; private set; }
 
-        public async void Start()
-        {
-            while(true)
-            {
-                await listener.AcceptTcpClientAsync().ContinueWith(r =>
-                {
-                    var client = r.Result;
-                });
-            }
-        }
     }
 }
