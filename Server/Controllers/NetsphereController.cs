@@ -3,18 +3,19 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Timers;
 using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Netsphere.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class Netsphere : ControllerBase
+    public class NetsphereController : ControllerBase
     {
         private static object Locker = new object();
         private static HashSet<Peer> Peers = new HashSet<Peer>();
         private static Timer Timer = new Timer(5000);
 
-        static Netsphere()
+        static NetsphereController()
         {
             Timer.Elapsed += OnRemoveInvalidPeers;
             Timer.AutoReset = true;
@@ -31,22 +32,21 @@ namespace Netsphere.Controllers
         }
 
         [HttpPost("Ping/{ipEndPoint}")]
-        public ActionResult<string> Ping(string ipEndPoint)
+        public ActionResult<string> Ping([DisallowNull] string ipEndPoint)
         {
             lock(Locker)
             {
                 var peer = Peers.Where(p => p.IPEndPoint == ipEndPoint).FirstOrDefault();
-                if(peer != null)
+                if (peer != null)
                 {
                     peer.Timestamp = DateTime.Now;
                 }
-
                 return Ok("Pong");
             }
         }
 
         [HttpPost("Register/{peer}")]
-        public ActionResult Register(Peer peer)
+        public ActionResult Register([DisallowNull] Peer peer)
         {
             lock(Locker)
             {
