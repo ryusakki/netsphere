@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Timers;
 using System.Linq;
 using System.Diagnostics.CodeAnalysis;
+using Netsphere.Shared.Models;
 
 namespace Netsphere.Controllers
 {
@@ -17,18 +18,17 @@ namespace Netsphere.Controllers
 
         static NetsphereController()
         {
-            Timer.Elapsed += OnRemoveInvalidPeers;
+            Timer.Elapsed += (source, e) =>
+            {
+                lock (Locker)
+                {
+                    var currentTime = DateTime.Now;
+                    Peers.RemoveWhere(p => Math.Abs((currentTime - p.Timestamp).Seconds) > 5);
+                }
+            };
+
             Timer.AutoReset = true;
             Timer.Enabled = true;
-        }
-
-        private static void OnRemoveInvalidPeers(object source, ElapsedEventArgs e)
-        {
-            lock(Locker)
-            {
-                var currentTime = DateTime.Now;                
-                Peers.RemoveWhere(p => Math.Abs((currentTime - p.Timestamp).Seconds) > 5);
-            }
         }
 
         [HttpPost("Ping/{ipEndPoint}")]
@@ -45,21 +45,22 @@ namespace Netsphere.Controllers
             }
         }
 
-        [HttpPost("Register/{peer}")]
-        public ActionResult Register([DisallowNull] Peer peer)
+        [HttpPost("Register")]
+        public ActionResult Register([DisallowNull] PeerModel peer)
         {
             lock(Locker)
             {
+                Console.WriteLine("Register {0}", peer.IPEndPoint);
                 return Peers.Add(peer) ? Ok() : BadRequest() as ActionResult;
             }
         }
 
-        [HttpGet("QueryCatalog")]
-        public ActionResult<List<string>> QueryCatalog()
+        [HttpGet("Catalog")]
+        public ActionResult<HashSet<PeerModel>> Catalog()
         {
             lock(Locker)
             {
-                return Ok(Peers.SelectMany(p => p.AvailableContent));
+                return Ok(Peers);
             }
         }
     }

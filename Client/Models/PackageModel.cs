@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography;
+using Netsphere.Shared.Models;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Netsphere.Client.Models
@@ -9,7 +11,7 @@ namespace Netsphere.Client.Models
     {
         public PackageModel(string name, byte[] data)
         {
-            Name = name;
+            Name = Path.GetFileNameWithoutExtension(name);
 
             using (var hash = SHA256.Create())
             {
@@ -19,7 +21,6 @@ namespace Netsphere.Client.Models
 
             Data = data;
         }
-
 
         public byte[] Data { get; set; }
     }

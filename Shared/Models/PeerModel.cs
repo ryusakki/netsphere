@@ -17,11 +17,11 @@ public class PeerModel
 
     // Lista de arquivos disponibilizado pelo peer
     [Required]
-    public List<PeerFile> Files { get; set; }
+    public List<FileModel> Files { get; set; }
 
     public override bool Equals([DisallowNull] object o)
     {
-        return (o as Peer).IPEndPoint == IPEndPoint;
+        return (o as PeerModel).IPEndPoint == IPEndPoint;
     }
 
     public override int GetHashCode()

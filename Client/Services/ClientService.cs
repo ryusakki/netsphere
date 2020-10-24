@@ -11,15 +11,12 @@ namespace Netsphere.Client.Services
     class ClientService
     {
         private TcpClient client;
-        private bool isRegistered;
-
         private static Timer Timer = new Timer(2000);
 
 
         public ClientService(TcpClient client)
         {
             this.client = client;
-            isRegistered = true;
 
             //Só ocorrem quando o registro é feito
             //Timer.Elapsed += OnPing;
@@ -36,16 +33,16 @@ namespace Netsphere.Client.Services
 
             for (int i = 0; i < 2; i++)
             {
-                Client.PostAsync(string.Concat(Server, "/Ping"), content).Wait();
+              //  Client.PostAsync(string.Concat(Server, "/Ping"), content).Wait();
             }
         }
 
         public void Register()
         {
-            var peer = new Peer();
+         //   var peer = new Peer();
 
-            Client.PostAsync(string.Concat(Server, "/Register"), null).Wait();
-            isRegistered = true;
+         //   Client.PostAsync(string.Concat(Server, "/Register"), null).Wait();
+          //  isRegistered = true;
         }
 
         public string IPEndPoint { get; private set; }
