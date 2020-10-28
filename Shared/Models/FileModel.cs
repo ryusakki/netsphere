@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Netsphere.Shared.Models
 {
+    [Serializable]
     public class FileModel
     {
         [Required]

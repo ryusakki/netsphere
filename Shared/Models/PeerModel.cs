@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel.DataAnnotations;
 using Netsphere.Shared.Models;
 
+[Serializable]
 public class PeerModel
 {
     // EndPoint do peer usado para registrar-se no servidor.
