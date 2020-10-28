@@ -13,103 +13,114 @@ using Netsphere.Client.Models;
 using Netsphere.Shared.Models;
 using Netsphere.Client.Extensions;
 using System.Threading.Tasks;
+using Netsphere.Client.Services;
+using Netsphere.Client.Logic;
 
 namespace Client
 {
-    class PeerService : PeerModel
+    class PeerService
     {
-        private TcpListener listener;
-        private bool isRegistered;
-        private List<PackageModel> localFiles;
-        private static readonly HttpClient Client = new HttpClient();
-        private static readonly Timer Timer = new Timer(2000);
-        private readonly object Locker = new object();
-        private static readonly string Server = "http://localhost:5001/Netsphere";
+        private readonly HttpClient client = new HttpClient();
+        private readonly Timer timer = new Timer(1000);
+        private readonly object locker = new object();
+        private readonly string server = "http://localhost:5001/Netsphere";
+        private List<PeerModel> peers;
 
         public PeerService()
         {
-            localFiles = LoadFiles();
-            isRegistered = false;
+            Connection = new Connection();
+            IsRegistered = false;
 
-            var ip = Dns.GetHostAddresses(Dns.GetHostName()).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).First();
-            var port = new Random().Next(5000, 9000);
-            listener = new TcpListener(ip, port);
-            listener.Start();
-
-            IPEndPoint = listener.LocalEndpoint.ToString();
-            Timestamp = DateTime.Now;
-            Files = localFiles.Cast<FileModel>().ToList();
-
-            Timer.Elapsed += (source, args) =>
+            timer.AutoReset = true;
+            timer.Elapsed += (source, args) =>
             {
-                lock(Locker)
+                lock(locker)
                 {
-                    if(isRegistered)
+                    if(IsRegistered)
                     {
-                        var apiEndPoint = string.Concat(Server, "/Ping");
-                        Client.PostAsJsonAsync(apiEndPoint, IPEndPoint).Wait();
+                        var apiEndPoint = string.Concat(server, "/Ping");
+                        var peerConnection = Connection.Listener.LocalEndpoint.ToString();
+
+                        var request = client.PostAsJsonAsync(apiEndPoint, peerConnection).GetAwaiter().GetResult();
+                        IsRegistered = request.IsSuccessStatusCode;
+                    }
+                    else
+                    {
+                        RegisterRequest().Wait();
+                        if(!IsRegistered)
+                        {
+                            timer.Enabled = false;
+                        }
                     }
                 }
             };
-            
-            Timer.Enabled = true;
-            Timer.AutoReset = true;
         }
 
-        private List<PackageModel> LoadFiles()
+        public bool IsRegistered { get; private set; }
+        public Connection Connection { get; private set; }
+
+        public async Task<bool> RegisterRequest()
         {
-            var path = string.Concat(AppContext.BaseDirectory.Split("bin").First(), "Repository");
-            var directory = new DirectoryInfo(path);
-            return directory.GetFiles().ToList().ConvertAll(f =>
+            try
             {
-                var fBytes = new byte[f.Length];
-                using (var fStream = f.Open(FileMode.Open))
+                var apiEndPoint = string.Concat(server, "/Register");
+                var request = await client.PostAsJsonAsync(apiEndPoint, new PeerModel
                 {
-                    fStream.Position = 0;
-                    fStream.Read(fBytes, 0, Convert.ToInt32(f.Length));
-                }
-                return new PackageModel(f.Name, fBytes);
-            });
-        }
-
-        public async Task RegisterRequest()
-        {
-            var apiEndPoint = string.Concat(Server, "/Register");
-            isRegistered = await Client.PostAsJsonAsync(apiEndPoint, this);
-        }
-
-        public async Task<List<PeerModel>> CatalogRequest()
-        {
-            var apiEndPoint = string.Concat(Server, "/Catalog");
-            var request = await Client.GetAsync(apiEndPoint);
-            var json = await request.Content.ReadAsStringAsync();
-
-            return JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-
-        public async Task Start()
-        {
-            while (true)
-            {
-                await listener.AcceptTcpClientAsync().ContinueWith(r =>
-                {
-                    var client = r.Result;
+                    IPEndPoint = Connection.Listener.LocalEndpoint.ToString(),
+                    Timestamp = DateTime.Now,
+                    Files = Repository.Files.Cast<FileModel>().ToList()
                 });
+
+                IsRegistered = request.IsSuccessStatusCode;
+
+                lock (locker)
+                {
+                    if (IsRegistered && !timer.Enabled)
+                    {
+                        timer.Enabled = true;
+                    }
+                }
+
+                return IsRegistered;
+            }
+            catch(Exception)
+            {
+                return false;
             }
         }
 
-        public enum PacketType
+        public async Task<List<FileModel>> CatalogRequest()
         {
-            FileRequest = 0x5C,
-            FileResponse
+            var apiEndPoint = string.Concat(server, "/Catalog");
+            var peerConnection = Connection.Listener.LocalEndpoint.ToString();
+            var request = await client.PostAsJsonAsync(apiEndPoint, peerConnection);
+            var json = await request.Content.ReadAsStringAsync();
+
+            peers = JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return peers.SelectMany(p => p.Files).ToList();
         }
 
-        public class Packet
+        public async Task<ArchiveModel> FileRequest(FileModel file)
         {
-            public PacketType Type { get; set; }
+            if(peers is null || peers.IsEmpty())
+            {
+                throw new NullReferenceException("Peer list is undefined.");
+            }
+
+            try
+            {
+                var peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
+                return await Connection.Request(peer, file);
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
+
         }
     }
 }
