@@ -9,12 +9,13 @@ namespace Netsphere.Client.Extensions
 {
     public static class HttpClientExtensions
     {
-        public static async Task<bool> PostAsJsonAsync<T>(this HttpClient client, string endpoint, T model)
+        public static async Task<HttpResponseMessage> PostAsJsonAsync<T>(this HttpClient client, string endpoint, T model)
         {
             var peerAsJson = JsonSerializer.Serialize(model);
             var content = new StringContent(peerAsJson, Encoding.UTF8, "application/json");
             var request = await client.PostAsync(endpoint, content);
-            return request.IsSuccessStatusCode;
+            
+            return request;
         }
     }
 }
