@@ -14,7 +14,7 @@ namespace Netsphere.Controllers
     {
         private static object Locker = new object();
         private static HashSet<PeerModel> Peers = new HashSet<PeerModel>();
-        private static Timer Timer = new Timer(5000);
+        private static Timer Timer = new Timer(4500);
 
         static NetsphereController()
         {
@@ -31,10 +31,10 @@ namespace Netsphere.Controllers
             Timer.Enabled = true;
         }
 
-        [HttpPost("Ping/{ipEndPoint}")]
-        public ActionResult<string> Ping([DisallowNull] string ipEndPoint)
+        [HttpPost("Ping")]
+        public ActionResult<string> Ping([FromBody] string ipEndPoint)
         {
-            lock(Locker)
+            lock (Locker)
             {
                 var peer = Peers.Where(p => p.IPEndPoint == ipEndPoint).FirstOrDefault();
                 if (peer != null)
@@ -55,12 +55,12 @@ namespace Netsphere.Controllers
             }
         }
 
-        [HttpGet("Catalog")]
-        public ActionResult<HashSet<PeerModel>> Catalog()
+        [HttpPost("Catalog")]
+        public ActionResult<HashSet<PeerModel>> Catalog([FromBody] string ipEndPoint)
         {
             lock(Locker)
             {
-                return Ok(Peers);
+                return Ok(Peers.Where(p => p.IPEndPoint != ipEndPoint));
             }
         }
     }
