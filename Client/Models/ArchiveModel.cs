@@ -8,6 +8,11 @@ namespace Netsphere.Client.Models
     [Serializable]
     public class ArchiveModel : FileModel
     {
+        /// <summary>
+        /// Inicializa as propriedades da super classe
+        /// </summary>
+        /// <param name="name">Nome do arquivo(extensão inclusa)</param>
+        /// <param name="data">ByteArray do arquivo</param>
         public ArchiveModel(string name, byte[] data)
         {
             Name = Path.GetFileNameWithoutExtension(name);
@@ -21,6 +26,9 @@ namespace Netsphere.Client.Models
             Data = data;
         }
 
+        /// <summary>
+        /// ByteArray do arquivo
+        /// </summary>
         public byte[] Data { get; set; }
     }
 }

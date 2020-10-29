@@ -1,11 +1,14 @@
 ﻿using Client;
 using Netsphere.Client.Enums;
 using Netsphere.Client.Extensions;
+using Netsphere.Client.Logic;
 using Netsphere.Client.UI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,24 +16,29 @@ namespace Netsphere.Client
 {
     public class Program
     {
-        private static UIContext Interface = new UIContext("Netsphere");
-        private static PeerService Service = new PeerService();
+        private static UIContext Interface;
+        private static PeerService Service;
 
         static async Task Init()
         {
-            var registered = await Interface.Loading("Registering to NetsphereServer", Service.RegisterRequest());
+            var registeredTask = Interface.Loading("Synchronizing your repository to NetsphereServer", Service.RegisterRequest());
+            var registered = await registeredTask;
 
-            if(registered)
+            if (registered)
             {
                 var catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
 
                 if(!catalog.IsEmpty())
                 {
-                    var selected =  Interface.Menu(true, catalog.ToArray());
-                    var file = catalog.ElementAt(selected);
 
-                    var package = await Interface.Loading("Kindly asking for a file to another peer", Service.FileRequest(file));
-                    
+                    int selected = 0;
+                    while(selected != -1)
+                    {
+                        selected = Interface.Menu(true, catalog.ToArray());
+                        var file = catalog.ElementAt(selected);
+                        var package = await Interface.Loading("Kindly asking for a file to another peer", Service.FileRequest(file));
+                    }
+
                 }
                 else
                 {
@@ -45,14 +53,11 @@ namespace Netsphere.Client
 
         static async Task Main(string[] args)
         {
-            //int selectedClass = UIContext.Menu(true, "Warrior", "Bard", "Mage", "Archer", "Thief", "Assassin", "Cleric", "Paladin", "etc.");
-            //var service = new PeerService();
-            //await service.RegisterRequest();
+            var config = File.ReadAllText(string.Concat(Directory.GetParent(Repository.Path), "/config.json"));
+            var jConfig = JsonSerializer.Deserialize<Dictionary<string, string>>(config);
 
-
-            //service.CatalogRequest();
-            //var register = await pService.RegisterRequest();
-
+            Interface = new UIContext("Netsphere");
+            Service = new PeerService(jConfig["server"]);
             await Init();
             Console.ReadKey();
         }

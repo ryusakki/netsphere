@@ -23,7 +23,7 @@ namespace Netsphere.Client.Logic
                     fStream.Position = 0;
                     fStream.Read(fBytes);
                 }
-                return new ArchiveModel(f.Name, fBytes);
+                return new ArchiveModel(string.Concat(f.Name, f.Extension), fBytes);
             });
         }
 
@@ -33,7 +33,8 @@ namespace Netsphere.Client.Logic
         public static async Task Save(ArchiveModel archive)
         {
             Files.Add(archive);
-            await File.WriteAllBytesAsync(string.Concat(Path, archive.Name), archive.Data);
+            var downloadsFolder = string.Format("{0}\\Downloads\\{1}", Path, archive.Name);
+            await File.WriteAllBytesAsync(downloadsFolder, archive.Data);
         }
     }
 }

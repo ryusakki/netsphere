@@ -1,0 +1,1 @@
+O tempo de serviço deve ser maior que o tempo de chegada para respeitar a hipótese da estacionariedade. Dado que 17.5 clientes são atendidos em 60 minutos, a média de chegada de clientes deve ser no máximo 16 a cada 60 minutos.

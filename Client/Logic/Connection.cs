@@ -33,7 +33,9 @@ namespace Netsphere.Client.Services
         public async Task<ArchiveModel> Request(PeerModel peer, FileModel file)
         {
             var ip = IPEndPoint.Parse(peer.IPEndPoint);
-            var client = new TcpClient(ip);
+            var client = new TcpClient();
+            client.Connect(ip);
+
             var request = new RequestPacketModel()
             {
                 File = file
@@ -51,9 +53,6 @@ namespace Netsphere.Client.Services
                 {
                     Array.Resize(ref buffer, read);
                     var response = buffer.Deserialize<ResponsePacketModel>();
-
-                    // client.Close();
-
                     archive = response.Archive;
                 }
             }
@@ -90,7 +89,7 @@ namespace Netsphere.Client.Services
         {
             while (true)
             {
-                await Listener.AcceptTcpClientAsync().ContinueWith(async task => await Response(task.Result));
+                await Listener.AcceptTcpClientAsync().ContinueWith(async task => await Response(task.Result)).ConfigureAwait(false);
             }
         }
     }

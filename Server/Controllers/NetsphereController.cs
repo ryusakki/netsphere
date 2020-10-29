@@ -31,8 +31,13 @@ namespace Netsphere.Controllers
             Timer.Enabled = true;
         }
 
+        /// <summary>
+        /// Ping em um peer específico. Quando chamado, este endpoint atualiza o DateTime do peer cujo ip foi especificado.
+        /// </summary>
+        /// <param name="ipEndPoint">String com o ip:port do peer que deseja-se realizar o ping.</param>
+        /// <returns>Tamanho da lista de peers</returns>
         [HttpPost("Ping")]
-        public ActionResult<string> Ping([FromBody] string ipEndPoint)
+        public ActionResult<int> Ping([FromBody] string ipEndPoint)
         {
             lock (Locker)
             {
@@ -41,10 +46,15 @@ namespace Netsphere.Controllers
                 {
                     peer.Timestamp = DateTime.Now;
                 }
-                return Ok("Pong");
+                return Ok(Peers.Where(p => p != peer).Count());
             }
         }
 
+        /// <summary>
+        /// Registra um peer em uma coleção de peers.
+        /// </summary>
+        /// <param name="peer">Peer que deseja-se registrar.</param>
+        /// <returns>Status 'Ok' caso o registro tenha sido efetuado com sucesso, 'BadRequest' caso contrário.</returns>
         [HttpPost("Register")]
         public ActionResult Register([DisallowNull] PeerModel peer)
         {
@@ -55,6 +65,11 @@ namespace Netsphere.Controllers
             }
         }
 
+        /// <summary>
+        /// Retorna a lista de peer e conteúdos que cada um disponibiliza.
+        /// </summary>
+        /// <param name="ipEndPoint">O ip do peer que faz a requisição para este endpoint deve ser especificado, para que o mesmo não seja retornado junto a lista.</param>
+        /// <returns>Coleção de peers</returns>
         [HttpPost("Catalog")]
         public ActionResult<HashSet<PeerModel>> Catalog([FromBody] string ipEndPoint)
         {

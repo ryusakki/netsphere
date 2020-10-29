@@ -20,14 +20,17 @@ namespace Client
 {
     class PeerService
     {
-        private readonly HttpClient client = new HttpClient();
-        private readonly Timer timer = new Timer(1000);
-        private readonly object locker = new object();
-        private readonly string server = "http://localhost:5001/Netsphere";
+        private HttpClient client;
+        private Timer timer;
+        private string server;
         private List<PeerModel> peers;
+        private readonly object locker = new object();
 
-        public PeerService()
+        public PeerService(string server)
         {
+            this.server = server;
+            client = new HttpClient();
+            timer = new Timer(1000);
             Connection = new Connection();
             IsRegistered = false;
 
@@ -58,7 +61,6 @@ namespace Client
 
         public bool IsRegistered { get; private set; }
         public Connection Connection { get; private set; }
-
         public async Task<bool> RegisterRequest()
         {
             try
@@ -114,7 +116,10 @@ namespace Client
             try
             {
                 var peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
-                return await Connection.Request(peer, file);
+                var requestedFile = await Connection.Request(peer, file);
+                await Repository.Save(requestedFile);
+
+                return requestedFile;
             }
             catch(Exception e)
             {

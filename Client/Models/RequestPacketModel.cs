@@ -12,6 +12,9 @@ namespace Netsphere.Client.Models
             Type = PacketType.FileRequest;
         }
 
+        /// <summary>
+        /// Informações mínimas sobre o arquivo que deseja-se obter
+        /// </summary>
         public FileModel File { get; set; }
     }
 }

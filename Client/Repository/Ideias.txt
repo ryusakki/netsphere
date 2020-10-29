@@ -1,0 +1,2 @@
+Discord tem um handle para processos? Como ele cria uma camada de sobreposição nos processos?
+Lancher com CEFSharp
