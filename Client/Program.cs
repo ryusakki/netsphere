@@ -27,7 +27,7 @@ namespace Netsphere.Client
                 var catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
                 while(catalog.IsEmpty())
                 {
-                    Interface.ShowMessage("Altough your local files were synchronized, there are no other peers connected to NetsphereServer. Refreshing in 2s...", ConsoleColor.Yellow);
+                    Interface.Countdown("Altough your local files were synchronized, there are no other peers connected to NetsphereServer.\nRefreshing in", 5, ConsoleColor.Yellow);
                     Thread.Sleep(2000);
                     catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
                 }
@@ -45,7 +45,7 @@ namespace Netsphere.Client
             }
         }
 
-        static async Task Main(string[] args)
+        static async Task Main()
         {
             var config = File.ReadAllText(string.Concat(Directory.GetParent(Repository.Path), "/config.json"));
             var jConfig = JsonSerializer.Deserialize<Dictionary<string, string>>(config);

@@ -16,6 +16,16 @@ namespace Netsphere.Client.UI
             Console.Title = appName;
         }
 
+        public void Countdown(string message, int seconds, ConsoleColor color)
+        {
+            for(int i = 0; i < seconds; i++)
+            {
+                ShowMessage(string.Format("{0} {1}", message, seconds - i), color);
+                Thread.Sleep(900);
+            }
+
+        }
+
         public void ShowMessage(string message, ConsoleColor color)
         {
             Console.Clear();

@@ -15,6 +15,12 @@ namespace Netsphere.Client.Logic
             Path = string.Concat(AppContext.BaseDirectory.Split("bin").First(), "Repository");
             var directory = new DirectoryInfo(Path);
 
+            if(!directory.Exists)
+            {
+                directory.Create();
+                directory.CreateSubdirectory("Downloads");
+            }
+
             Files = directory.GetFiles().ToList().ConvertAll(f =>
             {
                 var fBytes = new byte[f.Length];
