@@ -12,5 +12,5 @@ dotnet build
 ## Demonstration
 On first run, NetsphereClient will synchronize your repository folder with NetsphereServer
 
-Demonstration of one peer requesting files to another peer, which is located in another computer.
+Demonstration of one peer requesting files to another peer, which is located in a MacOS system.
 ![Demonstration](Usage.gif)
