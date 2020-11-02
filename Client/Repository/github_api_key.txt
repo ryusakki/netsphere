@@ -1,7 +1,0 @@
-42565bf75b6e154260286fbbfd39280e92643370
-
-
-"https://nuget.pkg.github.com/ryusakki/index.json"
-
-https://gist.github.com/andykuszyk/a5ee80ae263e77f651bed878c1deb03b
-https://milangatyas.com/Blog/Detail/9/publish-nuget-package-to-github-packages
