@@ -48,7 +48,7 @@ namespace Client
                     var json = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                     var serverPeersCount = JsonSerializer.Deserialize<int>(json);
 
-                    Console.WriteLine(serverPeersCount);
+                    //Console.WriteLine(serverPeersCount);
 
                     //Peer mismatch
                     if(peers is null || peers.Count != serverPeersCount)
