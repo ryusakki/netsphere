@@ -21,7 +21,7 @@ namespace Netsphere.Client.UI
             for(int i = 0; i < seconds; i++)
             {
                 ShowMessage(string.Format("{0} {1}", message, seconds - i), color);
-                Thread.Sleep(900);
+                Thread.Sleep(1000);
             }
 
         }

@@ -15,7 +15,7 @@ namespace Netsphere.Client.Models
         /// <param name="data">ByteArray do arquivo</param>
         public ArchiveModel(string name, byte[] data)
         {
-            Name = Path.GetFileNameWithoutExtension(name);
+            Name = name; //Path.GetFileNameWithoutExtension(name);
 
             using (var hash = SHA256.Create())
             {

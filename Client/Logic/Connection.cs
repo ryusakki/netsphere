@@ -46,15 +46,25 @@ namespace Netsphere.Client.Services
             {
                 await netStream.WriteAsync(request.Serialize());
 
-                var buffer = new byte[client.ReceiveBufferSize];
-                int read = await netStream.ReadAsync(buffer);
-                
-                if(read > 0)
+                var buffers = new List<byte[]>();
+                int read = 0;
+
+                do
                 {
-                    Array.Resize(ref buffer, read);
-                    var response = buffer.Deserialize<ResponsePacketModel>();
-                    archive = response.Archive;
+                    var buffer = new byte[client.ReceiveBufferSize];
+                    read = await netStream.ReadAsync(buffer);
+
+                    if (buffer.Length != read)
+                    {
+                        Array.Resize(ref buffer, read);
+                    }
+
+                    buffers.Add(buffer);
                 }
+                while (read > 0);
+
+                var response = buffers.SelectMany(b => b).ToArray().Deserialize<ResponsePacketModel>();
+                archive = response.Archive;
             }
             return archive;
         }

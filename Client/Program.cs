@@ -28,7 +28,6 @@ namespace Netsphere.Client
                 while(catalog.IsEmpty())
                 {
                     Interface.Countdown("Altough your local files were synchronized, there are no other peers connected to NetsphereServer.\nRefreshing in", 5, ConsoleColor.Yellow);
-                    Thread.Sleep(2000);
                     catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
                 }
 

@@ -29,7 +29,7 @@ namespace Netsphere.Client.Logic
                     fStream.Position = 0;
                     fStream.Read(fBytes);
                 }
-                return new ArchiveModel(string.Concat(f.Name, f.Extension), fBytes);
+                return new ArchiveModel(f.Name, fBytes);
             });
         }
 
