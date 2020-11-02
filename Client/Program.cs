@@ -21,33 +21,34 @@ namespace Netsphere.Client
 
         static async Task Init()
         {
-            var registeredTask = Interface.Loading("Synchronizing your repository to NetsphereServer", Service.RegisterRequest());
+            var registeredTask = Interface.Loading("Synchronizing your repository with NetsphereServer", Service.SynchronizeRequest());
             var registered = await registeredTask;
 
             if (registered)
             {
                 var catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
 
-                if(!catalog.IsEmpty())
+                while(catalog.IsEmpty())
                 {
-
-                    int selected = 0;
-                    while(selected != -1)
-                    {
-                        selected = Interface.Menu(true, catalog.ToArray());
-                        var file = catalog.ElementAt(selected);
-                        var package = await Interface.Loading("Kindly asking for a file to another peer", Service.FileRequest(file));
-                    }
-
+                    Interface.ShowMessage("There are no other peers connected to NetsphereServer, but your files were synchronized.", ConsoleColor.Yellow);
+                    Interface.ShowMessage("Refreshing catalog in 2s...", ConsoleColor.Magenta);
+                    Thread.Sleep(2000);
+                    
+                    catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
                 }
-                else
+
+                int selected = 0;
+                while (selected != -1)
                 {
-                    Console.WriteLine("Sem itens");
+                    selected = Interface.Menu(true, catalog.ToArray());
+                    var file = catalog.ElementAt(selected);
+                    var message = string.Format("Requesting {0}", file.Name);
+                    await Interface.Loading(message, Service.FileRequest(file));
                 }
             }
             else
             {
-                Interface.DisplayMessage("Registration failed. NetsphereServer may be offline.", ConsoleColor.Red);
+                Interface.ShowMessage("Registration failed. NetsphereServer may be offline.", ConsoleColor.Red);
             }
         }
 

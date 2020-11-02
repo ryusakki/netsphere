@@ -16,7 +16,7 @@ namespace Netsphere.Client.UI
             Console.Title = appName;
         }
 
-        public void DisplayMessage(string message, ConsoleColor color)
+        public void ShowMessage(string message, ConsoleColor color)
         {
             Console.Clear();
             Console.ForegroundColor = color;

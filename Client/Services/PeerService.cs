@@ -32,25 +32,35 @@ namespace Client
             client = new HttpClient();
             timer = new Timer(1000);
             Connection = new Connection();
-            IsRegistered = false;
+            IsSynchronized = false;
 
             timer.AutoReset = true;
             timer.Elapsed += (source, args) =>
             {
                 lock(locker)
                 {
-                    if(IsRegistered)
+                    if(IsSynchronized)
                     {
                         var apiEndPoint = string.Concat(server, "/Ping");
                         var peerConnection = Connection.Listener.LocalEndpoint.ToString();
 
                         var request = client.PostAsJsonAsync(apiEndPoint, peerConnection).GetAwaiter().GetResult();
-                        IsRegistered = request.IsSuccessStatusCode;
+                        IsSynchronized = request.IsSuccessStatusCode;
+
+                        var json = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                        var serverPeersCount = JsonSerializer.Deserialize<int>(json);
+
+                        //Peer mismatch
+                        if(peers is null || peers.Count != serverPeersCount)
+                        {
+                            CatalogRequest().Wait();
+                        }
                     }
                     else
                     {
-                        RegisterRequest().Wait();
-                        if(!IsRegistered)
+                        SynchronizeRequest().Wait();
+
+                        if(!IsSynchronized)
                         {
                             timer.Enabled = false;
                         }
@@ -59,9 +69,9 @@ namespace Client
             };
         }
 
-        public bool IsRegistered { get; private set; }
+        public bool IsSynchronized { get; private set; }
         public Connection Connection { get; private set; }
-        public async Task<bool> RegisterRequest()
+        public async Task<bool> SynchronizeRequest()
         {
             try
             {
@@ -73,17 +83,17 @@ namespace Client
                     Files = Repository.Files.Cast<FileModel>().ToList()
                 });
 
-                IsRegistered = request.IsSuccessStatusCode;
-
                 lock (locker)
                 {
-                    if (IsRegistered && !timer.Enabled)
-                    {
-                        timer.Enabled = true;
-                    }
+                    IsSynchronized = request.IsSuccessStatusCode;
+                }
+                
+                if (IsSynchronized && !timer.Enabled)
+                {
+                    timer.Enabled = true;
                 }
 
-                return IsRegistered;
+                return IsSynchronized;
             }
             catch(Exception)
             {
@@ -97,20 +107,23 @@ namespace Client
             var peerConnection = Connection.Listener.LocalEndpoint.ToString();
             var request = await client.PostAsJsonAsync(apiEndPoint, peerConnection);
             var json = await request.Content.ReadAsStringAsync();
-
-            peers = JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
+            
+            lock(locker)
             {
-                PropertyNameCaseInsensitive = true
-            });
+                peers = JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
-            return peers.SelectMany(p => p.Files).ToList();
+                return peers.SelectMany(p => p.Files).ToList();
+            }
         }
 
         public async Task<ArchiveModel> FileRequest(FileModel file)
         {
             if(peers is null || peers.IsEmpty())
             {
-                throw new NullReferenceException("Peer list is undefined.");
+                await CatalogRequest();
             }
 
             try
