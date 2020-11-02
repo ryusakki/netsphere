@@ -37,32 +37,23 @@ namespace Client
             timer.AutoReset = true;
             timer.Elapsed += (source, args) =>
             {
-                if(IsSynchronized)
+                lock(locker)
                 {
-                    var apiEndPoint = string.Concat(server, "/Ping");
-                    var peerConnection = Connection.Listener.LocalEndpoint.ToString();
-
-                    var request = client.PostAsJsonAsync(apiEndPoint, peerConnection).GetAwaiter().GetResult();
-                    IsSynchronized = request.IsSuccessStatusCode;
-
-                    var json = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    var serverPeersCount = JsonSerializer.Deserialize<int>(json);
-
-                    //Console.WriteLine(serverPeersCount);
-
-                    //Peer mismatch
-                    if(peers is null || peers.Count != serverPeersCount)
+                    if(IsSynchronized)
                     {
-                        CatalogRequest().Wait();
+                        var apiEndPoint = string.Concat(server, "/Ping");
+                        var peerConnection = Connection.Listener.LocalEndpoint.ToString();
+
+                        var request = client.PostAsJsonAsync(apiEndPoint, peerConnection).GetAwaiter().GetResult();
+                        IsSynchronized = request.IsSuccessStatusCode;
                     }
-                }
-                else
-                {
-                    SynchronizeRequest().Wait();
-
-                    if(!IsSynchronized)
+                    else
                     {
-                        timer.Enabled = false;
+                        SynchronizeRequest().Wait();
+                        if(!IsSynchronized)
+                        {
+                            timer.Enabled = false;
+                        }
                     }
                 }
             };
@@ -82,14 +73,14 @@ namespace Client
                     Files = Repository.Files.Cast<FileModel>().ToList()
                 });
 
-               // lock (locker)
-               // {
-                    IsSynchronized = request.IsSuccessStatusCode;
-               // }
-                
-                if (IsSynchronized && !timer.Enabled)
+
+                lock (locker)
                 {
-                    timer.Enabled = true;
+                    IsSynchronized = request.IsSuccessStatusCode;
+                    if (IsSynchronized && !timer.Enabled)
+                    {
+                        timer.Enabled = true;
+                    }
                 }
 
                 return IsSynchronized;
@@ -106,36 +97,28 @@ namespace Client
             var peerConnection = Connection.Listener.LocalEndpoint.ToString();
             var request = await client.PostAsJsonAsync(apiEndPoint, peerConnection);
             var json = await request.Content.ReadAsStringAsync();
-            
-            //lock(locker)
-            //{
-                peers = JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
 
-                return peers.SelectMany(p => p.Files).ToList();
-           // }
+            peers = JsonSerializer.Deserialize<List<PeerModel>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return peers.SelectMany(p => p.Files).ToList();
         }
 
         public async Task<ArchiveModel> FileRequest(FileModel file)
         {
-            PeerModel peer;
-
-            //lock(locker)
-            //{
-                if(peers is null || peers.IsEmpty())
-                {
-                    CatalogRequest().Wait();
-                }
-
-                peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
-            //}
+            if(peers is null || peers.IsEmpty())
+            {
+                throw new NullReferenceException("Peer list is undefined.");
+            }
 
             try
             {
+                var peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
                 var requestedFile = await Connection.Request(peer, file);
                 await Repository.Save(requestedFile);
+
                 return requestedFile;
             }
             catch(Exception e)

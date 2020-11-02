@@ -21,29 +21,22 @@ namespace Netsphere.Client
 
         static async Task Init()
         {
-            var registeredTask = Interface.Loading("Synchronizing your repository with NetsphereServer", Service.SynchronizeRequest());
-            var registered = await registeredTask;
-
-            if (registered)
+            var synchronized = await Interface.Loading("Synchronizing your repository with NetsphereServer", Service.SynchronizeRequest());
+            if (synchronized)
             {
                 var catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
-
                 while(catalog.IsEmpty())
                 {
-                    Interface.ShowMessage("There are no other peers connected to NetsphereServer, but your files were synchronized.", ConsoleColor.Yellow);
-                    Interface.ShowMessage("Refreshing catalog in 2s...", ConsoleColor.Magenta);
+                    Interface.ShowMessage("Altough your local files were synchronized, there are no other peers connected to NetsphereServer. Refreshing in 2s...", ConsoleColor.Yellow);
                     Thread.Sleep(2000);
-                    
                     catalog = await Interface.Loading("Loading catalog of files", Service.CatalogRequest());
                 }
 
-                int selected = 0;
-                while (selected != -1)
+                for (int selected = 0; selected != -1;)
                 {
                     selected = Interface.Menu(true, catalog.ToArray());
                     var file = catalog.ElementAt(selected);
-                    var message = string.Format("Requesting {0}", file.Name);
-                    await Interface.Loading(message, Service.FileRequest(file));
+                    _ = await Interface.Loading(string.Format("Requesting {0}", file.Name), Service.FileRequest(file));
                 }
             }
             else
