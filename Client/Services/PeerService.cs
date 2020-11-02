@@ -121,17 +121,22 @@ namespace Client
 
         public async Task<ArchiveModel> FileRequest(FileModel file)
         {
-            if(peers is null || peers.IsEmpty())
+            PeerModel peer;
+
+            lock(locker)
             {
-                await CatalogRequest();
+                if(peers is null || peers.IsEmpty())
+                {
+                    CatalogRequest().Wait();
+                }
+
+                peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
             }
 
             try
             {
-                var peer = peers.Where(p => p.Files.Contains(file)).FirstOrDefault();
                 var requestedFile = await Connection.Request(peer, file);
                 await Repository.Save(requestedFile);
-
                 return requestedFile;
             }
             catch(Exception e)
