@@ -1,4 +1,6 @@
 # Netsphere
+This is my second assignment for the distributed computers course.
+Most of my usages were bad and i do feel bad :[
 
 ## Requirements
 - [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download/dotnet-core/3.1)
@@ -20,3 +22,5 @@ On first run, NetsphereClient will synchronize your repository folder with Netsp
 
 Demonstration of one peer requesting files to another peer, which is located in a MacOS system.
 ![Demonstration](Usage.gif)
+
+
